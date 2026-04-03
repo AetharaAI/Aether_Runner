@@ -24,9 +24,9 @@ models:
     max_context_tokens: 131072
     supports:
       text: true
-      image: true
+      image: false
       audio: false
-      video: true
+      video: false
       tools: true
       responses: true
       chat: true
