@@ -16,6 +16,7 @@ class TransformersBackend:
         self.device_map = device_map
         self.trust_remote_code = trust_remote_code
         self._processor: Any | None = None
+        self._tokenizer: Any | None = None
         self._model: Any | None = None
         self._loaded = False
 
@@ -28,9 +29,23 @@ class TransformersBackend:
         torch = importlib.import_module("torch")
 
         auto_processor = getattr(transformers, "AutoProcessor")
+        auto_tokenizer = getattr(transformers, "AutoTokenizer")
         auto_model = getattr(transformers, "AutoModelForCausalLM")
 
-        self._processor = auto_processor.from_pretrained(self.model_path, trust_remote_code=self.trust_remote_code)
+        try:
+            self._processor = auto_processor.from_pretrained(
+                self.model_path,
+                trust_remote_code=self.trust_remote_code,
+            )
+        except Exception:
+            # Some quantized/exported bundles do not include a usable multimodal processor.
+            # Fall back to tokenizer-only mode for text generation compatibility.
+            self._tokenizer = auto_tokenizer.from_pretrained(
+                self.model_path,
+                trust_remote_code=self.trust_remote_code,
+                use_fast=False,
+            )
+
         torch_dtype = getattr(torch, self.dtype, "auto") if self.dtype != "auto" else "auto"
         self._model = auto_model.from_pretrained(
             self.model_path,
@@ -44,7 +59,25 @@ class TransformersBackend:
         if not self._loaded:
             raise RuntimeError("backend_unavailable: transformers backend not loaded")
         # A minimal generic generate implementation. Family adapters can override for better behavior.
-        inputs = self._processor(text=prompt, return_tensors="pt")
+        if self._processor is not None:
+            inputs = self._processor(text=prompt, return_tensors="pt")
+            outputs = self._model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                do_sample=temperature > 0,
+                temperature=max(temperature, 1e-5),
+                top_p=top_p,
+            )
+            decoded = self._processor.batch_decode(outputs, skip_special_tokens=True)
+            return decoded[0] if decoded else ""
+
+        if self._tokenizer is None:
+            raise RuntimeError("backend_unavailable: neither processor nor tokenizer is available")
+
+        inputs = self._tokenizer(prompt, return_tensors="pt")
+        model_device = getattr(self._model, "device", None)
+        if model_device is not None:
+            inputs = {k: v.to(model_device) for k, v in inputs.items()}
         outputs = self._model.generate(
             **inputs,
             max_new_tokens=max_new_tokens,
@@ -52,5 +85,5 @@ class TransformersBackend:
             temperature=max(temperature, 1e-5),
             top_p=top_p,
         )
-        decoded = self._processor.batch_decode(outputs, skip_special_tokens=True)
+        decoded = self._tokenizer.batch_decode(outputs, skip_special_tokens=True)
         return decoded[0] if decoded else ""
