@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import importlib
+import json
+import tempfile
 from typing import Any
+from pathlib import Path
 
 
 class TransformersBackend:
@@ -48,12 +51,9 @@ class TransformersBackend:
                     use_fast=True,
                 )
             except Exception:
-                # Fallback to slow tokenizer as a last resort.
-                self._tokenizer = auto_tokenizer.from_pretrained(
-                    self.model_path,
-                    trust_remote_code=self.trust_remote_code,
-                    use_fast=False,
-                )
+                # Some AWQ exports carry tokenizer_config shapes that break fast tokenizer init.
+                # Patch common issues in a temp copy and retry fast tokenizer.
+                self._tokenizer = self._load_patched_fast_tokenizer(auto_tokenizer)
 
         torch_dtype = getattr(torch, self.dtype, "auto") if self.dtype != "auto" else "auto"
         self._model = auto_model.from_pretrained(
@@ -63,6 +63,45 @@ class TransformersBackend:
             device_map=self.device_map,
         )
         self._loaded = True
+
+    def _load_patched_fast_tokenizer(self, auto_tokenizer: Any) -> Any:
+        model_dir = Path(self.model_path)
+        tok_cfg = model_dir / "tokenizer_config.json"
+        if not tok_cfg.exists():
+            raise RuntimeError("backend_unavailable: tokenizer_config.json not found for tokenizer fallback")
+
+        with tempfile.TemporaryDirectory(prefix="aether_tokfix_") as td:
+            temp_dir = Path(td)
+            # Copy only tokenizer-relevant files to keep patch scope minimal.
+            for name in (
+                "tokenizer_config.json",
+                "tokenizer.json",
+                "special_tokens_map.json",
+                "config.json",
+                "generation_config.json",
+            ):
+                src = model_dir / name
+                if src.exists():
+                    (temp_dir / name).write_bytes(src.read_bytes())
+
+            cfg_path = temp_dir / "tokenizer_config.json"
+            cfg = json.loads(cfg_path.read_text())
+
+            # HF expects extra_special_tokens as a mapping; some exports write a list.
+            extras = cfg.get("extra_special_tokens")
+            if isinstance(extras, list):
+                cfg["extra_special_tokens"] = {f"extra_token_{i}": tok for i, tok in enumerate(extras)}
+
+            # Prefer tokenizer.json for fast tokenizer path.
+            if (temp_dir / "tokenizer.json").exists():
+                cfg["tokenizer_file"] = "tokenizer.json"
+
+            cfg_path.write_text(json.dumps(cfg))
+            return auto_tokenizer.from_pretrained(
+                str(temp_dir),
+                trust_remote_code=self.trust_remote_code,
+                use_fast=True,
+            )
 
     def generate_text(self, prompt: str, max_new_tokens: int = 256, temperature: float = 1.0, top_p: float = 0.95) -> str:
         if not self._loaded:
