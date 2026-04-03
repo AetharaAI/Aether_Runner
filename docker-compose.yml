@@ -1,0 +1,32 @@
+services:
+  aether-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        INSTALL_INFERENCE: ${INSTALL_INFERENCE:-false}
+    image: aether-runner:latest
+    ports:
+      - "8010:8010"
+    env_file:
+      - .env
+    volumes:
+      - ./config:/app/config:ro
+      - ./modelcards:/app/modelcards:ro
+      - ./data/cache:/app/data/cache
+      - ./data/tmp:/app/data/tmp
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8010/healthz')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    # Uncomment for GPU hosts with NVIDIA container toolkit
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]

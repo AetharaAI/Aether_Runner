@@ -1,0 +1,71 @@
+runner:
+  host: 0.0.0.0
+  port: 8010
+  auth_mode: bearer
+  temp_dir: ./data/tmp
+  media_cache_dir: ./data/cache
+  asset_ttl_seconds: 86400
+  max_upload_mb:
+    image: 50
+    audio: 200
+    video: 1000
+  enable_realtime: false
+  allow_remote_urls: true
+  max_request_mb: 128
+
+models:
+  - id: gemma-4-e4b-it
+    path: /models/google/gemma-4-e4b-it
+    adapter: gemma4
+    backend: transformers
+    dtype: auto
+    device_map: auto
+    trust_remote_code: false
+    max_context_tokens: 131072
+    supports:
+      text: true
+      image: true
+      audio: true
+      video: true
+      tools: true
+      responses: true
+      chat: true
+      embeddings: false
+      transcription: true
+      translation: true
+      tts: false
+    defaults:
+      temperature: 1.0
+      top_p: 0.95
+      top_k: 64
+      max_output_tokens: 1024
+      enable_thinking: false
+      vision_token_budget: 280
+
+  - id: generic-hf-chat
+    path: /models/generic-hf-chat
+    adapter: generic_hf_chat
+    backend: transformers
+    dtype: auto
+    device_map: auto
+    trust_remote_code: false
+    max_context_tokens: 32768
+    supports:
+      text: true
+      image: false
+      audio: false
+      video: false
+      tools: false
+      responses: true
+      chat: true
+      embeddings: false
+      transcription: false
+      translation: false
+      tts: false
+    defaults:
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 50
+      max_output_tokens: 1024
+      enable_thinking: false
+      vision_token_budget: 0
