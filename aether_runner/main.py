@@ -22,6 +22,9 @@ settings = Settings()
 configure_logging(settings.log_level)
 logger = logging.getLogger(__name__)
 
+if not settings.parsed_api_keys:
+    raise RuntimeError("AETHER_API_KEYS must be set with at least one bearer token.")
+
 file_cfg = load_runner_file(settings.config_path)
 asset_registry = AssetRegistry(file_cfg.runner.media_cache_dir)
 model_registry = ModelRegistry(file_cfg, eager_load=settings.eager_model_load)

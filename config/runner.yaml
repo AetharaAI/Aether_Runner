@@ -14,6 +14,34 @@ runner:
   max_request_mb: 128
 
 models:
+  - id: gemma-4-31b-it
+    path: /models/cyankiwi/gemma-4-31B-it-AWQ-4bit
+    adapter: gemma4
+    backend: transformers
+    dtype: auto
+    device_map: auto
+    trust_remote_code: false
+    max_context_tokens: 131072
+    supports:
+      text: true
+      image: true
+      audio: false
+      video: true
+      tools: true
+      responses: true
+      chat: true
+      embeddings: false
+      transcription: false
+      translation: false
+      tts: false
+    defaults:
+      temperature: 1.0
+      top_p: 0.95
+      top_k: 64
+      max_output_tokens: 1024
+      enable_thinking: false
+      vision_token_budget: 280
+
   - id: gemma-4-e4b-it
     path: /models/google/gemma-4-e4b-it
     adapter: gemma4

@@ -51,7 +51,7 @@ uvicorn aether_runner.main:app --host 0.0.0.0 --port 8010
 Request auth header for all endpoints:
 
 ```text
-Authorization: Bearer dev-secret-key
+Authorization: Bearer <your-aether-api-key>
 ```
 
 ## Docker Compose run
@@ -79,13 +79,13 @@ Then run smoke test:
 List models:
 
 ```bash
-curl -H "Authorization: Bearer dev-secret-key" http://localhost:8010/v1/models
+curl -H "Authorization: Bearer <your-aether-api-key>" http://localhost:8010/v1/models
 ```
 
 Chat completion:
 
 ```bash
-curl -H "Authorization: Bearer dev-secret-key" \
+curl -H "Authorization: Bearer <your-aether-api-key>" \
   -H "Content-Type: application/json" \
   -d '{
     "model":"generic-hf-chat",
@@ -97,7 +97,7 @@ curl -H "Authorization: Bearer dev-secret-key" \
 Media ingest:
 
 ```bash
-curl -H "Authorization: Bearer dev-secret-key" \
+curl -H "Authorization: Bearer <your-aether-api-key>" \
   -F file=@./sample.wav \
   http://localhost:8010/aether/v1/media/ingest
 ```

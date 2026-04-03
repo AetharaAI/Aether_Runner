@@ -72,7 +72,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="AETHER_", case_sensitive=False)
 
     config_path: str = "config/runner.yaml"
-    api_keys: str = "dev-secret-key"
+    api_keys: str = ""
     log_level: str = "INFO"
     allow_private_urls: bool = False
     eager_model_load: bool = False

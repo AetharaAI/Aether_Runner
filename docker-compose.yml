@@ -7,7 +7,7 @@ services:
         INSTALL_INFERENCE: ${INSTALL_INFERENCE:-false}
     image: aether-runner:latest
     ports:
-      - "8010:8010"
+      - "${AETHER_BIND_IP:-0.0.0.0}:${AETHER_HOST_PORT:-8001}:8010"
     env_file:
       - .env
     volumes:
@@ -15,6 +15,7 @@ services:
       - ./modelcards:/app/modelcards:ro
       - ./data/cache:/app/data/cache
       - ./data/tmp:/app/data/tmp
+      - /mnt/aetherpro-extra1/models:/models:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8010/healthz')"]
       interval: 30s

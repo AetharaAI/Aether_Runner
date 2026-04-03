@@ -1,12 +1,14 @@
+import os
 from fastapi.testclient import TestClient
 
+os.environ.setdefault("AETHER_API_KEYS", "test-key")
 from aether_runner.main import app
 
 
 client = TestClient(app)
 
 
-def _headers(token: str = "dev-secret-key") -> dict[str, str]:
+def _headers(token: str = "test-key") -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
