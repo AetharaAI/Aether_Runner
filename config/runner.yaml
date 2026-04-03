@@ -14,8 +14,8 @@ runner:
   max_request_mb: 128
 
 models:
-  - id: gemma-4-31b-it
-    path: /models/cyankiwi/gemma-4-31B-it-AWQ-4bit
+  - id: gemma-4-26b-a4b-it
+    path: /models/cyankiwi/gemma-4-26B-A4B-it-AWQ-4bit
     adapter: gemma4
     backend: transformers
     dtype: auto
