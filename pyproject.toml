@@ -25,7 +25,8 @@ dependencies = [
 inference = [
   "torch>=2.4.0",
   "transformers>=4.57.0",
-  "accelerate>=1.0.0"
+  "accelerate>=1.0.0",
+  "torchvision>=0.19.0"
 ]
 test = [
   "pytest>=8.3.0",
