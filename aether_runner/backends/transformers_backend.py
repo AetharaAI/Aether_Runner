@@ -40,11 +40,20 @@ class TransformersBackend:
         except Exception:
             # Some quantized/exported bundles do not include a usable multimodal processor.
             # Fall back to tokenizer-only mode for text generation compatibility.
-            self._tokenizer = auto_tokenizer.from_pretrained(
-                self.model_path,
-                trust_remote_code=self.trust_remote_code,
-                use_fast=False,
-            )
+            try:
+                # Prefer fast tokenizer first (often works with tokenizer.json-only exports).
+                self._tokenizer = auto_tokenizer.from_pretrained(
+                    self.model_path,
+                    trust_remote_code=self.trust_remote_code,
+                    use_fast=True,
+                )
+            except Exception:
+                # Fallback to slow tokenizer as a last resort.
+                self._tokenizer = auto_tokenizer.from_pretrained(
+                    self.model_path,
+                    trust_remote_code=self.trust_remote_code,
+                    use_fast=False,
+                )
 
         torch_dtype = getattr(torch, self.dtype, "auto") if self.dtype != "auto" else "auto"
         self._model = auto_model.from_pretrained(
