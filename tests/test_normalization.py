@@ -4,7 +4,7 @@ from aether_runner.services.normalization import from_chat_request, from_respons
 
 def test_chat_normalization_generates_canonical_request() -> None:
     req = ChatCompletionRequest(
-        model="gemma-4-e4b-it",
+        model="gemma-4-31b-it",
         messages=[Message(role="user", content=[ContentItem(type="text", text="hello")])],
         stream=True,
         temperature=0.2,
@@ -12,7 +12,7 @@ def test_chat_normalization_generates_canonical_request() -> None:
         max_tokens=111,
     )
     c = from_chat_request(req)
-    assert c.model == "gemma-4-e4b-it"
+    assert c.model == "gemma-4-31b-it"
     assert c.route == "/v1/chat/completions"
     assert c.stream is True
     assert c.sampling.max_output_tokens == 111
@@ -20,7 +20,7 @@ def test_chat_normalization_generates_canonical_request() -> None:
 
 
 def test_responses_normalization_string_input() -> None:
-    req = ResponsesRequest(model="generic-hf-chat", input="hi", max_output_tokens=42)
+    req = ResponsesRequest(model="gemma-4-31b-it", input="hi", max_output_tokens=42)
     c = from_responses_request(req)
     assert c.route == "/v1/responses"
     assert c.messages[0].role == "user"
@@ -30,7 +30,7 @@ def test_responses_normalization_string_input() -> None:
 
 def test_responses_normalization_array_input() -> None:
     req = ResponsesRequest(
-        model="generic-hf-chat",
+        model="gemma-4-31b-it",
         input=[
             ResponsesAPIInputItem(
                 role="user",

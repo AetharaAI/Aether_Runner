@@ -27,7 +27,7 @@ def test_models_route_available() -> None:
 
 def test_chat_completion_works() -> None:
     payload = {
-        "model": "generic-hf-chat",
+        "model": "gemma-4-31b-it",
         "messages": [{"role": "user", "content": [{"type": "text", "text": "hello"}]}],
         "stream": False,
     }

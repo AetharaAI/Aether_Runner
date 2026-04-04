@@ -8,8 +8,8 @@ def test_registry_loads_and_has_models() -> None:
     registry = ModelRegistry(cfg, eager_load=False)
     registry.load()
     manifests = registry.list_manifests()
-    assert len(manifests) >= 2
-    assert any(m.id == "gemma-4-e4b-it" for m in manifests)
+    assert len(manifests) >= 1
+    assert any(m.id == "gemma-4-31b-it" for m in manifests)
 
 
 def test_capabilities_unique_ids_validation() -> None:

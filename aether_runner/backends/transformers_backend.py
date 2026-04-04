@@ -41,19 +41,23 @@ class TransformersBackend:
                 trust_remote_code=self.trust_remote_code,
             )
         except Exception:
-            # Some quantized/exported bundles do not include a usable multimodal processor.
-            # Fall back to tokenizer-only mode for text generation compatibility.
+            # Keep a tokenizer-only fallback for text-generation-only bundles.
+            # Order matters: prefer stock fast, then stock slow, then patched fast.
             try:
-                # Prefer fast tokenizer first (often works with tokenizer.json-only exports).
                 self._tokenizer = auto_tokenizer.from_pretrained(
                     self.model_path,
                     trust_remote_code=self.trust_remote_code,
                     use_fast=True,
                 )
             except Exception:
-                # Some AWQ exports carry tokenizer_config shapes that break fast tokenizer init.
-                # Patch common issues in a temp copy and retry fast tokenizer.
-                self._tokenizer = self._load_patched_fast_tokenizer(auto_tokenizer)
+                try:
+                    self._tokenizer = auto_tokenizer.from_pretrained(
+                        self.model_path,
+                        trust_remote_code=self.trust_remote_code,
+                        use_fast=False,
+                    )
+                except Exception:
+                    self._tokenizer = self._load_patched_fast_tokenizer(auto_tokenizer)
 
         torch_dtype = getattr(torch, self.dtype, "auto") if self.dtype != "auto" else "auto"
         self._model = auto_model.from_pretrained(
