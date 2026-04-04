@@ -88,7 +88,7 @@ Chat completion:
 curl -H "Authorization: Bearer <your-aether-api-key>" \
   -H "Content-Type: application/json" \
   -d '{
-    "model":"generic-hf-chat",
+    "model":"gemma-4-31b-it",
     "messages":[{"role":"user","content":[{"type":"text","text":"hello"}]}]
   }' \
   http://localhost:8010/v1/chat/completions

@@ -30,6 +30,15 @@ class TransformersBackend:
     def load(self) -> None:
         transformers = importlib.import_module("transformers")
         torch = importlib.import_module("torch")
+        model_dir = Path(self.model_path)
+        local_path_mode = model_dir.is_absolute() or model_dir.exists()
+
+        if local_path_mode and not model_dir.exists():
+            raise RuntimeError(f"backend_unavailable: local model path does not exist: {self.model_path}")
+
+        load_kwargs: dict[str, Any] = {"trust_remote_code": self.trust_remote_code}
+        if local_path_mode:
+            load_kwargs["local_files_only"] = True
 
         auto_processor = getattr(transformers, "AutoProcessor")
         auto_tokenizer = getattr(transformers, "AutoTokenizer")
@@ -38,7 +47,7 @@ class TransformersBackend:
         try:
             self._processor = auto_processor.from_pretrained(
                 self.model_path,
-                trust_remote_code=self.trust_remote_code,
+                **load_kwargs,
             )
         except Exception:
             # Keep a tokenizer-only fallback for text-generation-only bundles.
@@ -46,14 +55,14 @@ class TransformersBackend:
             try:
                 self._tokenizer = auto_tokenizer.from_pretrained(
                     self.model_path,
-                    trust_remote_code=self.trust_remote_code,
+                    **load_kwargs,
                     use_fast=True,
                 )
             except Exception:
                 try:
                     self._tokenizer = auto_tokenizer.from_pretrained(
                         self.model_path,
-                        trust_remote_code=self.trust_remote_code,
+                        **load_kwargs,
                         use_fast=False,
                     )
                 except Exception:
@@ -62,7 +71,7 @@ class TransformersBackend:
         torch_dtype = getattr(torch, self.dtype, "auto") if self.dtype != "auto" else "auto"
         self._model = auto_model.from_pretrained(
             self.model_path,
-            trust_remote_code=self.trust_remote_code,
+            **load_kwargs,
             torch_dtype=torch_dtype,
             device_map=self.device_map,
         )
@@ -104,6 +113,7 @@ class TransformersBackend:
             return auto_tokenizer.from_pretrained(
                 str(temp_dir),
                 trust_remote_code=self.trust_remote_code,
+                local_files_only=True,
                 use_fast=True,
             )
 

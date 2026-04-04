@@ -15,7 +15,7 @@ runner:
 
 models:
   - id: gemma-4-31b-it
-    path: /models/google/gemma-4-31b-it
+    path: /models/google/gemma-4-31B-it
     adapter: gemma4
     backend: transformers
     dtype: auto
